@@ -26,7 +26,7 @@ contract CallerV1Test is Test {
         // START OF SOLUTION
         // (You can create any additional contract if needed)
 
-        
+        vault.withdraw();
 
         // END OF SOLUTION
 
